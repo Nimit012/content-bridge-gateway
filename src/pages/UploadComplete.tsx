@@ -57,7 +57,7 @@ const UploadComplete = () => {
                 </div>
                 <div className="space-y-2">
                   <p className="text-sm font-medium text-gray-500">Processing Time</p>
-                  <p className="text-gray-900">2 minutes 34 seconds</p>
+                  <p className="text-gray-900"> - minutes - seconds</p>
                 </div>
                 {uploadData.description && (
                   <div className="space-y-2 md:col-span-3">
