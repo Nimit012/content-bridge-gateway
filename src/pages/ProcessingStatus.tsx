@@ -28,15 +28,15 @@ const ProcessingStatus = () => {
     {
       id: 2,
       label: "in content processing lambda",
-      name: "Extracting content",
-      description: "Unpacking and analyzing your Articulate package",
+      name: "Analyzing content",
+      description: "analyzing your Articulate package",
       icon: FileText,
     },
     {
       id: 3,
-      label: "in content step2 lambda",
-      name: "Processing content",
-      description: "Converting and optimizing your content",
+      label: "zip extracted and successfully processed",
+      name: "Extracting content",
+      description: "Extracting and modifying content from your Articulate package",
       icon: Cog,
     },
     {
@@ -63,7 +63,7 @@ const ProcessingStatus = () => {
     socket.onmessage = (event) => {
       const message = event.data; // Just the string like "step1", "step2", etc.
       console.log("WebSocket message received: ", message);
-      handleWebSocketEvent(message);
+      webSocketMessageHandler(message);
     };
 
     socket.onerror = (error) => {
@@ -74,21 +74,8 @@ const ProcessingStatus = () => {
       console.log("WebSocket connection closed.");
     };
 
-
-
-    const createWebSocketHandler = () => {
-  let messageCount = 0;
-  let lastUpdateTime = 0; // Track the time of the last update
-
-  return (message) => {
-    messageCount++;
-
-    if (messageCount <= 4) return;  // Skip initial messages
-
-    const currentTime = Date.now();
-
-    // Only process the event if 1 second has passed since the last update
-    if (currentTime - lastUpdateTime >= 1000) {
+    const webSocketMessageHandler = (message) => {
+      // Only process the event if 1 second has passed since the last update
       const matched = steps.find((s) =>
         message.toLowerCase().includes(s.label.toLowerCase())
       );
@@ -97,86 +84,20 @@ const ProcessingStatus = () => {
         const next = matched.id + 1;
 
         // Delay the update of the current step by 1 second
-        setTimeout(() => {
-          // Clamp so we never go past the last step
-          setCurrentStep(next <= steps.length ? next : steps.length);
-          setProgress((next / steps.length) * 100);
+        // Clamp so we never go past the last step
+        setCurrentStep(next <= steps.length ? next : steps.length);
 
-          // If it was the last step, go to /complete
-          if (matched.id === steps.length) {
-            setTimeout(() => navigate("/complete"), 1500);
-          }
-
-          // Update the last update time after the state change
-          lastUpdateTime = Date.now(); // Update the last update time
-        }, 1000); // Ensure there's a 1-second gap before updating the step
+        // If it was the last step, go to /complete
+        if (matched.id === steps.length) {
+          setTimeout(() => {
+            setProgress((matched.id / steps.length) * 100);
+            navigate("/complete");
+          }, 1500);
+        } else {
+          setProgress((matched.id / steps.length) * 100);
+        }
       }
-    }
-  };
-};
-
-const handleWebSocketEvent = createWebSocketHandler();
-
-
-
-//   const createWebSocketHandler = () => {
-//   let messageCount = 0;
-
-//   return (message) => {
-//     messageCount++;
-
-//     if (messageCount <= 4) return;  // Skip initial messages
-
-//       const matched = steps.find((s) =>
-//         message.toLowerCase().includes(s.label.toLowerCase())
-//       );
-
-//       if (matched) {
-//         const next = matched.id + 1;
-//         // Clamp so we never go past the last step
-//         setCurrentStep(next <= steps.length ? next : steps.length);
-//         setProgress((next / steps.length) * 100);
-
-//         // If it was the last step, go to /complete
-//         if (matched.id === steps.length) {
-//           setTimeout(() => navigate("/complete"), 1500);
-//         }
-//       }
-//   };
-// };
-
-
-    // const createWebSocketHandler = () => {
-    //   let messageCount = 0;
-
-    //   return (message) => {
-    //     messageCount++;
-
-    //     if (messageCount <= 4) return;
-
-    //     const matched = steps.find((s) =>
-    //       message.toLowerCase().includes(s.label.toLowerCase())
-    //     );
-    //     if (matched) {
-    //       const next = matched.id + 1;
-    //       // clamp so we never go past the last step
-    //       setCurrentStep(next <= steps.length ? next : steps.length);
-    //       setProgress((next / steps.length) * 100);
-
-    //       // if it was the last step, go to /complete
-    //       if (matched.id === steps.length) {
-    //         setTimeout(() => navigate("/complete"), 1500);
-    //       }
-    //     }
-    //   };
-    // };
-
-    // const handleWebSocketEvent = createWebSocketHandler();
-
-    // Cleanup WebSocket on unmount
-    // return () => {
-    //   socket.close();
-    // };
+    };
   }, [navigate, currentStep]);
 
   const formatFileSize = (bytes) => {
