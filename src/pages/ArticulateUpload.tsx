@@ -144,9 +144,7 @@ const ArticulateUpload = () => {
       return;
     }
 
-    // const data = await getPresignedUrl(selectedFile);
-    // console.log('Presigned URL data:', data);
-    // await uploadFileToS3(data.uploadUrl, selectedFile);
+
 
     // Store upload data in sessionStorage for the processing page
     sessionStorage.setItem(
@@ -165,7 +163,26 @@ const ArticulateUpload = () => {
       try {
         const { uploadUrl } = await getPresignedUrl(selectedFile);
         console.log("Presigned URL:", uploadUrl);
+        const startTime = Date.now(); // Start timing
+
         await uploadFileToS3(uploadUrl, selectedFile);
+
+        const endTime = Date.now(); // End timing
+        const durationMs = endTime - startTime;
+        const durationSeconds = (durationMs / 1000).toFixed(2);
+        console.log(" durationSeconds:", durationSeconds);
+
+        sessionStorage.setItem(
+          "uploadData",
+          JSON.stringify({
+            file: selectedFile.name,
+            size: selectedFile.size,
+            ...formData,
+            s3uploadDuration: durationSeconds, // Add the duration to the stored data
+          })
+        );
+  
+
       } catch (err) {
         console.error("Background upload failed:", err);
         toast({

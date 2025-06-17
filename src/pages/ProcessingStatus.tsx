@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   Card,
   CardContent,
@@ -16,6 +16,7 @@ const ProcessingStatus = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [uploadData, setUploadData] = useState(null);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const steps = [
     {
@@ -63,7 +64,23 @@ const ProcessingStatus = () => {
     socket.onmessage = (event) => {
       const message = event.data; // Just the string like "step1", "step2", etc.
       console.log("WebSocket message received: ", message);
-      webSocketMessageHandler(message);
+
+      const parsed = JSON.parse(message);
+
+      const timeTaken = parsed.timeTaken;
+      if(parsed.url){
+        const uploadUrl = parsed.url;
+        sessionStorage.setItem("uploadUrl", JSON.stringify(uploadUrl));
+      } 
+
+      console.log(" timeTaken:", timeTaken)
+      const msg = parsed.message;
+      if(timeTaken){
+        storeTimeTaken(timeTaken);
+      }
+
+
+      webSocketMessageHandler(msg, timeTaken);
     };
 
     socket.onerror = (error) => {
@@ -74,7 +91,23 @@ const ProcessingStatus = () => {
       console.log("WebSocket connection closed.");
     };
 
-    const webSocketMessageHandler = (message) => {
+
+
+    const storeTimeTaken = (timeTaken: number) => {
+      // Retrieve the existing timeTaken array from sessionStorage
+      const existingDurations = JSON.parse(sessionStorage.getItem("timeDurations") || "[]");
+      
+      // Add the new timeTaken to the array
+      existingDurations.push(timeTaken);
+
+      console.log(" existingDurations:", existingDurations)
+      // Store the updated array in sessionStorage
+      sessionStorage.setItem("timeDurations", JSON.stringify(existingDurations));
+    };
+
+
+
+    const webSocketMessageHandler = (message, timeTaken) => {
       // Only process the event if 1 second has passed since the last update
       const matched = steps.find((s) =>
         message.toLowerCase().includes(s.label.toLowerCase())
@@ -89,10 +122,10 @@ const ProcessingStatus = () => {
 
         // If it was the last step, go to /complete
         if (matched.id === steps.length) {
-          setTimeout(() => {
+          // setTimeout(() => {
             setProgress((matched.id / steps.length) * 100);
             navigate("/complete");
-          }, 1500);
+          // }, 1500);
         } else {
           setProgress((matched.id / steps.length) * 100);
         }
@@ -155,13 +188,13 @@ const ProcessingStatus = () => {
                 <span className="text-sm font-medium text-gray-700">
                   {progress}% Complete
                 </span>
-                <div className="flex items-center space-x-2 text-sm text-gray-500">
+                {/* <div className="flex items-center space-x-2 text-sm text-gray-500">
                   <Clock className="h-4 w-4" />
                   <span>
                     Estimated time:{" "}
                     {progress < 100 ? "2-3 minutes" : "Complete"}
                   </span>
-                </div>
+                </div> */}
               </div>
             </div>
           </CardContent>
