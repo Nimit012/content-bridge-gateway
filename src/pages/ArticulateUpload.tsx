@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ArrowLeft, Upload, FileArchive, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { getSocket } from "../lib/socket";
+import { setSocket } from "../lib/socket";
 
 const ArticulateUpload = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -86,7 +86,7 @@ const ArticulateUpload = () => {
   // Request a presigned S3 upload URL from backend
   async function getPresignedUrl(file: File) {
     const contentType = encodeURIComponent(file.type || "application/zip");
-    const url = `https://5nwiomhbwd.execute-api.us-east-1.amazonaws.com/dev/presigned-url?contentType=${contentType}`;
+    const url = `https://m169po56wj.execute-api.us-east-1.amazonaws.com/dev/presigned-url?contentType=${contentType}`;
     const response = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -120,9 +120,9 @@ const ArticulateUpload = () => {
   }
 
   useEffect(() => {
-    const socket = getSocket();
-    socket.onopen = () =>
-      console.log("Connection opened from Page ArticulateUpload");
+    // const socket = getSocket();
+    // socket.onopen = () =>
+    //   console.log("Connection opened from Page ArticulateUpload");
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -161,9 +161,20 @@ const ArticulateUpload = () => {
     // fire-and-forget upload
     (async () => {
       try {
-        const { uploadUrl } = await getPresignedUrl(selectedFile);
+        const { uploadId, uploadUrl } = await getPresignedUrl(selectedFile);
         console.log("Presigned URL:", uploadUrl);
         const startTime = Date.now(); // Start timing
+
+
+
+
+
+        const socket = setSocket(uploadId);
+        socket.onopen = () =>
+          console.log("Connection opened from Page ArticulateUpload");
+
+
+
 
         await uploadFileToS3(uploadUrl, selectedFile);
 
