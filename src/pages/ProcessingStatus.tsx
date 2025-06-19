@@ -62,6 +62,14 @@ const ProcessingStatus = () => {
 
     // WebSocket connection
     socket.onmessage = (event) => {
+
+      const data = JSON.parse(event.data);
+
+      if (data.type === 'CONNECTION_ID') {
+        return;
+    }
+
+
       const message = event.data; // Just the string like "step1", "step2", etc.
       console.log("WebSocket message received: ", message);
 

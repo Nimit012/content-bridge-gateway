@@ -145,6 +145,7 @@ const ArticulateUpload = () => {
       return;
     }
 
+    sessionStorage.removeItem("timeDurations"); // Clear the timeDurations in sessionStorage
 
 
     // Store upload data in sessionStorage for the processing page
@@ -159,37 +160,39 @@ const ArticulateUpload = () => {
 
 
     const socket = setSocket();
-    socket.onopen = () =>
+    socket.onopen = () => {
+
       console.log("Connection opened from Page ArticulateUpload");
+    
+      socket.send(JSON.stringify({
+        action: 'sendMessage'
+    }));
+    }
 
 
     let connectionId = "";
+  
+
     socket.onmessage = (event) => {
-      const message = event.data; 
-
-      connectionId = message;
-
-    };
-
-
+      const data = JSON.parse(event.data);
+      
+      if (data.type === 'CONNECTION_ID') {
+          console.log('Connection ID received:', data.connectionId);
+          connectionId = data.connectionId;
+      }else{
+        return;
+      }
 
     // fire-and-forget upload
     (async () => {
       try {
-        const { uploadId, uploadUrl } = await getPresignedUrl(selectedFile, connectionId);
+        console.log('Connection ID here:', connectionId);
+
+        const { uploadUrl } = await getPresignedUrl(selectedFile, connectionId);
         console.log("Presigned URL:", uploadUrl);
         const startTime = Date.now(); // Start timing
 
-
-
-
-
-    
         navigate("/processing");
-
-
-
-
 
         await uploadFileToS3(uploadUrl, selectedFile);
 
@@ -218,6 +221,20 @@ const ArticulateUpload = () => {
         });
       }
     })();
+
+
+
+
+
+
+
+
+
+
+  };
+
+
+
   };
 
   const formatFileSize = (bytes: number) => {

@@ -8,6 +8,7 @@ export function setSocket() {
 
     socket.onopen = () => {
       console.log('WebSocket connected');
+
     };
 
     socket.onclose = () => {
