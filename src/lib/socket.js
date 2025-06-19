@@ -1,12 +1,14 @@
-// lib/socket.js
-let socket;
+// socket.js
+let socket = null;
 
-export function getSocket() {
-  if (!socket) {
-    socket = new WebSocket("wss://eowjhroeoj.execute-api.us-east-1.amazonaws.com/dev/");
+export function setSocket() {
+  if (!socket || socket.readyState === WebSocket.CLOSED) {
+    const url = `wss://4ezciypcy8.execute-api.us-east-1.amazonaws.com/dev/`;
+    socket = new WebSocket(url);
 
     socket.onopen = () => {
       console.log('WebSocket connected');
+
     };
 
     socket.onclose = () => {
@@ -19,5 +21,9 @@ export function getSocket() {
     };
   }
 
+  return socket;
+}
+
+export function getSocket() {
   return socket;
 }
