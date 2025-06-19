@@ -84,7 +84,7 @@ const ArticulateUpload = () => {
   };
 
   // Request a presigned S3 upload URL from backend
-  async function getPresignedUrl(file: File) {
+  async function getPresignedUrl(file: File, connectionId: string) {
     const contentType = encodeURIComponent(file.type || "application/zip");
     const url = `https://m169po56wj.execute-api.us-east-1.amazonaws.com/dev/presigned-url?contentType=${contentType}`;
     const response = await fetch(url, {
@@ -92,6 +92,7 @@ const ArticulateUpload = () => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         filename: file.name,
+        connectionId: connectionId
       }),
     });
 
@@ -156,12 +157,26 @@ const ArticulateUpload = () => {
       })
     );
 
-    navigate("/processing");
+
+    const socket = setSocket();
+    socket.onopen = () =>
+      console.log("Connection opened from Page ArticulateUpload");
+
+
+    let connectionId = "";
+    socket.onmessage = (event) => {
+      const message = event.data; 
+
+      connectionId = message;
+
+    };
+
+
 
     // fire-and-forget upload
     (async () => {
       try {
-        const { uploadId, uploadUrl } = await getPresignedUrl(selectedFile);
+        const { uploadId, uploadUrl } = await getPresignedUrl(selectedFile, connectionId);
         console.log("Presigned URL:", uploadUrl);
         const startTime = Date.now(); // Start timing
 
@@ -169,9 +184,9 @@ const ArticulateUpload = () => {
 
 
 
-        const socket = setSocket(uploadId);
-        socket.onopen = () =>
-          console.log("Connection opened from Page ArticulateUpload");
+    
+        navigate("/processing");
+
 
 
 
