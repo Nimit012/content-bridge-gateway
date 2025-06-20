@@ -102,7 +102,7 @@ const UploadComplete = () => {
     },
     {
       id: 4,
-      label: "in step3 lambda",
+      label: "GPS generation completed successfully",
       name: "Finalizing",
       description: "Preparing your content for the testbench",
       icon: CheckCircle,
